@@ -65,9 +65,14 @@ def make_intake_node(policy: Policy, audit: AuditLogger, llm=None, ocr_threshold
         image_path = state.get("domain_state", {}).get("image_path")
 
         if image_path:
+            text = user_text
             try:
                 text, conf = _ocr_text(image_path)
-                if conf < ocr_threshold and llm is not None:
+                if conf >= ocr_threshold:
+                    audit.log_decision(turn_id=state["turn_id"], node="ingest",
+                                       decision="ocr_route:ocr",
+                                       rationale=f"ocr_conf={conf:.0f}")
+                elif llm is not None:
                     vision_text = _vision_text(llm, image_path)
                     if vision_text:
                         text = vision_text
@@ -80,14 +85,22 @@ def make_intake_node(policy: Policy, audit: AuditLogger, llm=None, ocr_threshold
                                             rationale=f"ocr_conf={conf:.0f}")
                 else:
                     audit.log_decision(turn_id=state["turn_id"], node="ingest",
-                                       decision="ocr_route:ocr",
+                                       decision="ocr_route:ocr_low_conf_no_llm",
                                        rationale=f"ocr_conf={conf:.0f}")
             except Exception as e:
-                # Tesseract missing / image unreadable — fall back to plain text.
+                # Tesseract missing / image unreadable. If we have a vision LLM,
+                # the whole point of the fallback is to handle this — route the
+                # image to the model instead of silently dropping it.
                 audit.log_decision(turn_id=state["turn_id"], node="ingest",
                                     decision="ocr_route:unavailable",
                                     rationale=str(e)[:120])
-                text = user_text
+                if llm is not None:
+                    vision_text = _vision_text(llm, image_path)
+                    if vision_text:
+                        text = vision_text
+                        audit.log_decision(turn_id=state["turn_id"], node="ingest",
+                                            decision="ocr_route:vision_fallback_on_error",
+                                            rationale="ocr failed -> vision")
         else:
             text = user_text
 
