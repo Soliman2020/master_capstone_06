@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Environments / secrets
+.env
+p6_env/
+
+# Runtime artifacts (generated, not committed)
+data/*.db
+data/*.jsonl
+data/*.csv
+data/*.log
+*.db
+*.jsonl
+
+# PDFs are built from .md; keep the .md source under VCS, ignore the PDF
+# (uncomment if you want to ignore built PDFs)
+# reports/*.pdf
