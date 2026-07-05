@@ -14,11 +14,16 @@ from typing import Any, Literal, TypedDict
 
 @dataclass
 class PlanStep:
-    """One step the planner decided to take. ``action`` is a domain action name."""
+    """One step the planner decided to take. ``action`` is a domain action name.
+
+    ``args`` is optional pre-filled arguments (used by scripted scenarios in
+    stub mode); in LLM mode the worker fills args from the model's output.
+    """
 
     action: str
     reason: str = ""
     expected_side_effect: bool = False
+    args: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -53,6 +58,10 @@ class ReviewDecision:
 
     @property
     def route(self) -> str:
+        # The graph's conditional edge after the reviewer reads this to pick the
+        # next node: block -> summarizer, require_human -> human_approval, allow
+        # -> worker_dispatch. Putting it here keeps the routing logic with the
+        # verdict instead of scattered in the graph builder.
         if not self.allow:
             return "block"
         if self.require_human:
@@ -71,15 +80,18 @@ class AgentState(TypedDict, total=False):
     # The plan and where we are in it.
     plan: list[PlanStep]
     step_index: int
-    # The current action the worker extracted, the reviewer's verdict, and the
-    # result of executing it (if approved).
+    # The current action the worker extracted, the reviewer's verdict on it, and
+    # the result of executing it (only set once the reviewer allowed + dispatch
+    # ran). These three fields are the per-step state the loop reuses.
     current_action: ActionIntent | None
     review: ReviewDecision | None
     tool_result: ToolResult | None
-    # Memory cross-link (user_id:turn_id) so audit lines point at scratchpad rows.
+    # Memory cross-link (user_id:turn_id) so an audit line can point at the
+    # scratchpad row for the same turn.
     scratchpad_ref: str
-    # Domain context — opaque to governance. P6: tenant/unit/lease. P7: incident/zone.
+    # Domain context — opaque to governance. P6 puts tenant/unit/lease ids here;
+    # P7 will put incident/zone context here. Governance nodes never read inside.
     domain_state: dict[str, Any]
-    # Loop guard + lifecycle status.
+    # Loop guard + lifecycle status. status lets the summarizer mark a turn done.
     iteration: int
     status: Literal["planning", "executing", "blocked", "done"]
