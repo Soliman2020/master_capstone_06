@@ -21,10 +21,10 @@ from typing import Callable
 
 from langgraph.graph import END, START, StateGraph
 
-from audit import AuditLogger
-from graph_state import AgentState
-from memory import SessionScratchpad
-from nodes import (
+from .audit import AuditLogger
+from .graph_state import AgentState
+from .memory import SessionScratchpad
+from .nodes import (
     make_human_approval_node,
     make_planner_node,
     make_reviewer_node,
@@ -34,7 +34,7 @@ from nodes import (
     route_after_review,
     route_after_worker,
 )
-from policy import Policy
+from .policy import Policy
 
 
 def build_graph(
