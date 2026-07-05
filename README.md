@@ -35,6 +35,21 @@ required limitation demo.
 
 ## Architecture
 
+### Top-level layout
+
+```
+project_06_agentic_ai/
+├── src/            # the agent: governance (reusable engine) + domain (property-mgmt specifics)
+├── notebooks/      # agentic_system.ipynb — the demo you submit
+├── tests/          # 21 passing tests (policy, audit chain, eviction block, governance-leak guard)
+├── reports/        # agent_graph.png + the System Design Report (md -> pdf)
+├── data/           # generated at runtime: SQLite db, audit log, scratchpad, sample image
+├── requirements.txt / requirements_full.txt
+└── README.md
+```
+
+### The graph
+
 ```
 START -> ingest -> planner -> worker
 worker -> reviewer                       (always, before any tool runs)
@@ -61,7 +76,10 @@ The diagram is regenerated inside the notebook (and saved to
 build_system(use_llm=False).graph.get_graph().draw_mermaid_png()
 ```
 
-### Module layout
+### Source layout (`src/`)
+
+The agent is split into a **reusable engine** and a **swappable domain** — this
+is the central design decision (see "The governance→P7 transfer" below).
 
 ```
 src/
@@ -81,6 +99,10 @@ src/
 │   └── prompts.py       # planner/worker/summarizer system prompts
 └── app.py               # wires governance + domain, CLI + run_scenario()
 ```
+
+The notebook imports from `src/` (`sys.path.insert(0, str(SRC))`), so the
+governance/domain split is what the notebook actually loads — not just a
+documentation convention.
 
 ---
 
