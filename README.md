@@ -1,5 +1,5 @@
 # Project 6 — Agentic AI: Property-Management Operator Agent
-
+![](https://github.com/user-attachments/assets/48901fa9-d779-47c8-8261-6d96e841c163)
 A multi-agent **LangGraph** operator assistant for a small property manager. A
 user request (text or an attached image) flows through five nodes — **ingest →
 planner → worker → reviewer → dispatch / summarizer** — with a non-bypassable
