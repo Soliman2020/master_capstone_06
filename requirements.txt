@@ -1,0 +1,33 @@
+# Direct imports used by project_06_agentic_ai.
+# Transitive dependencies (langchain-core, langsmith, orjson, pydantic, etc.)
+# are pulled in automatically by these — see requirements_full.txt for the
+# exact pinned environment (pip freeze).
+#
+# Install:  pip install -r requirements.txt
+# Reproduce: pip install -r requirements_full.txt
+
+# Agent framework — graph, nodes, tool-calling, message types
+langchain>=1.3
+langgraph>=1.2
+langchain-ollama>=1.1      # ChatOllama -> kimi-k2.7-code:cloud on Ollama Cloud
+
+# Multi-modal intake — OCR + image handling
+pytesseract>=0.3           # requires the Tesseract binary installed on the OS
+pillow>=11
+
+# Policy + config
+PyYAML>=6.0                # domain/policy.yaml loader
+
+# Data tools (SQLite is stdlib; pandas reads the CSV ledgers)
+pandas>=2.0
+
+# .env loading for OLLAMA_API_KEY / OLLAMA_BASE_URL
+python-dotenv>=1.0
+
+# Notebook execution + display of the rendered graph
+jupyterlab>=4.0
+ipykernel>=7.0
+ipython>=9.0
+
+# Tests
+pytest>=8.0
