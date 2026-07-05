@@ -1,0 +1,58 @@
+# P6 property-management policy.
+# P7 will replace this whole file with a security_operations policy that uses
+# the same schema (actions + constraints + require_human + block_reason), so
+# the governance reviewer does not change.
+
+version: 1
+domain: property_management
+
+intake:
+  ocr_confidence_threshold: 65   # median per-word confidence; below -> vision fallback
+
+pii_redaction:
+  enabled: true
+  patterns:
+    - {name: ssn,   regex: '\b\d{3}-\d{2}-\d{4}\b',         replacement: '[SSN-REDACTED]'}
+    - {name: email, regex: '[\w.+-]+@[\w-]+\.[\w.-]+',      replacement: '[EMAIL-REDACTED]'}
+    - {name: phone, regex: '\b\d{10}\b',                   replacement: '[PHONE-REDACTED]'}
+
+retention:
+  audit_log_days: 365
+  memory_days: 30
+  redacted_only_in_memory: true
+
+actions:
+  # Read-only — auto-allowed, no human gate.
+  - {name: tenant.query,      side_effect: false, allow: true}
+  - {name: ledger.read,       side_effect: false, allow: true}
+  - {name: ledger.reconcile,  side_effect: false, allow: true}
+
+  # Side-effect with a spend cap and required fields.
+  - name: maintenance.schedule
+    side_effect: true
+    allow: true
+    constraints:
+      cost_estimate: {le: 500}     # P7 will swap this for risk_band_score: {ge: 75}
+    require_fields: [unit_id, vendor, cost_estimate]
+
+  # Side-effect that always needs a human.
+  - name: lease.renew
+    side_effect: true
+    allow: true
+    require_human: true
+
+  # Hard blocks — outside the agent's authority. This is the rubric failure case.
+  - name: tenant.evict
+    side_effect: true
+    allow: false
+    require_human: true
+    block_reason: "Eviction is outside agent authority; it requires a legal process."
+  - name: tenant.lockout
+    side_effect: true
+    allow: false
+    require_human: true
+    block_reason: "Lockout is outside agent authority; it requires a legal process."
+
+spend_caps:
+  per_action_usd: 500
+  per_turn_usd: 2000
